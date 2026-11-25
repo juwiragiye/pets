@@ -1,17 +1,58 @@
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from PIL import Image, UnidentifiedImageError
 from io import BytesIO
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    UploadFile,
+    File,
+    HTTPException,
+    Request
+)
+from PIL import Image, ImageOps, UnidentifiedImageError
+
+from app.config import (
+    MAX_FILE_SIZE,
+    MAX_IMAGE_PIXELS,
+    ALLOWED_FORMATS
+)
+from app.schemas import PredictionResponse, BreedsResponse
+from app.services.classifier import PetClassifier
+
 
 router = APIRouter(tags=["Predictions"])
 
-MAX_FILE_SIZE = 5 * 1024 * 1024
-ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
+
+def get_classifier(request: Request) -> PetClassifier:
+    classifier = request.app.state.classifier
+
+    if classifier is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Model is not available."
+        )
+
+    return classifier
 
 
-@router.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    contents = await file.read(MAX_FILE_SIZE + 1)
+@router.get("/breeds", response_model=BreedsResponse)
+def get_breeds(
+    classifier: PetClassifier = Depends(get_classifier)
+):
+    breeds = classifier.get_breeds()
+
+    return {
+        "count": len(breeds),
+        "breeds": breeds
+    }
+
+
+@router.post("/predict", response_model=PredictionResponse)
+def predict(
+    file: UploadFile = File(...),
+    classifier: PetClassifier = Depends(get_classifier)
+):
+    contents = file.file.read(MAX_FILE_SIZE + 1)
 
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(
@@ -21,16 +62,16 @@ async def predict(file: UploadFile = File(...)):
 
     try:
         with Image.open(BytesIO(contents)) as image:
+
             if image.format not in ALLOWED_FORMATS:
                 raise HTTPException(
                     status_code=415,
-                    detail="Only JPEG, PNG and WEBP are supported."
+                    detail="Unsupported image format."
                 )
 
             width, height = image.size
-            image_format = image.format
 
-            if width * height > 20_000_000:
+            if width * height > MAX_IMAGE_PIXELS:
                 raise HTTPException(
                     status_code=413,
                     detail="Image dimensions are too large."
@@ -38,17 +79,18 @@ async def predict(file: UploadFile = File(...)):
 
             image.load()
 
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+            prepared_image = ImageOps.exif_transpose(
+                image
+            ).convert("RGB")
+
+    except (
+        UnidentifiedImageError,
+        OSError,
+        Image.DecompressionBombError
+    ):
         raise HTTPException(
             status_code=400,
             detail="Invalid or corrupted image."
         )
 
-    return {
-        "message": "Image uploaded successfully",
-        "filename": file.filename,
-        "format": image_format,
-        "width": width,
-        "height": height,
-        "size_bytes": len(contents)
-    }
+    return classifier.predict(prepared_image)
