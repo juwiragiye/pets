@@ -62,8 +62,9 @@ export function renderResults(data) {
     const container = document.querySelector(
         '#results-content'
     );
-
+    container.setAttribute('aria-busy', 'false');
     container.className = 'mt-6';
+    
 
     container.innerHTML = `
         <div class="rounded-xl bg-brand-50 p-6">
