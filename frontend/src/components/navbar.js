@@ -40,3 +40,44 @@ export function Navbar() {
         </header>
     `;
 }
+
+
+export function updateModelStatus(status) {
+    const element = document.querySelector('#model-status');
+
+    if (!element) return;
+
+    const statuses = {
+        checking: {
+            label: 'Checking model',
+            color: 'bg-slate-400',
+        },
+        online: {
+            label: 'Model online',
+            color: 'bg-green-500',
+        },
+        unavailable: {
+            label: 'Model unavailable',
+            color: 'bg-amber-500',
+        },
+        offline: {
+            label: 'API offline',
+            color: 'bg-red-500',
+        },
+    };
+
+    const current = statuses[status];
+
+    if (!current) return;
+
+    element.innerHTML = `
+        <span class="h-2 w-2 rounded-full
+                     ${current.color}">
+        </span>
+
+        ${current.label}
+    `;
+
+    element.setAttribute('role', 'status');
+}
+

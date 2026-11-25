@@ -143,3 +143,97 @@ export function renderResults(data) {
         list.appendChild(item);
     });
 }
+
+
+export function renderLoading() {
+    const container = document.querySelector(
+        '#results-content'
+    );
+
+    container.className = `
+        mt-6 flex min-h-72 flex-col
+        items-center justify-center text-center
+    `;
+
+    container.setAttribute('aria-busy', 'true');
+
+    container.innerHTML = `
+        <div class="h-12 w-12 animate-spin rounded-full
+                    border-4 border-brand-100
+                    border-t-brand-600">
+        </div>
+
+        <h3 class="mt-6 font-semibold text-brand-900">
+            Analyzing your pet
+        </h3>
+
+        <p class="mt-2 text-sm text-slate-500">
+            Our deep learning model is processing your image.
+        </p>
+    `;
+}
+
+
+export function resetResults() {
+    const container = document.querySelector(
+        '#results-content'
+    );
+
+    container.className = `
+        mt-6 flex min-h-72 flex-col
+        items-center justify-center text-center
+    `;
+
+    container.setAttribute('aria-busy', 'false');
+
+    container.innerHTML = `
+        <div class="mb-4 flex h-16 w-16
+                    items-center justify-center
+                    rounded-full bg-brand-50">
+
+            <span class="text-3xl">🐾</span>
+
+        </div>
+
+        <h3 class="font-medium text-slate-600">
+            No predictions yet
+        </h3>
+
+        <p class="mt-2 max-w-xs text-sm text-slate-400">
+            Upload an image to discover its breed.
+        </p>
+    `;
+}
+
+
+export function renderError(message) {
+    const container = document.querySelector(
+        '#results-content'
+    );
+
+    container.className = `
+        mt-6 flex min-h-72 flex-col
+        items-center justify-center text-center
+    `;
+
+    container.setAttribute('aria-busy', 'false');
+
+    container.innerHTML = `
+        <div class="rounded-full bg-red-50 p-4
+                    text-2xl text-red-500">
+            !
+        </div>
+
+        <h3 class="mt-4 font-semibold text-red-600">
+            Prediction failed
+        </h3>
+
+        <p id="prediction-error"
+           role="alert"
+           class="mt-2 text-sm text-slate-500">
+        </p>
+    `;
+
+    document.querySelector('#prediction-error')
+        .textContent = message;
+}

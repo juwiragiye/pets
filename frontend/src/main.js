@@ -1,7 +1,11 @@
 
 import './styles.css';
 
-import { Navbar } from './components/navbar.js';
+import {
+    Navbar,
+    updateModelStatus,
+} from './components/navbar.js';
+
 import { Hero } from './components/hero.js';
 import { Footer } from './components/footer.js';
 
@@ -13,7 +17,15 @@ import {
 import {
     Results,
     renderResults,
+    renderLoading,
+    renderError,
+    resetResults,
 } from './components/results.js';
+
+import {
+    getHealth,
+    predictImage,
+} from './services/api.js';
 
 
 const app = document.querySelector('#app');
@@ -47,9 +59,14 @@ app.innerHTML = `
                 </h2>
 
                 <p class="mt-4 leading-relaxed text-slate-600">
-                    Pets is a deep learning project exploring
-                    computer vision, transfer learning and
-                    full-stack machine learning deployment.
+                    Pets is an end-to-end deep learning project
+                    exploring computer vision, transfer learning
+                    and machine learning deployment.
+                </p>
+
+                <p class="mt-4 leading-relaxed text-slate-600">
+                    Built using fastai, PyTorch, FastAPI,
+                    Vanilla JavaScript, Tailwind CSS and Vite.
                 </p>
 
             </section>
@@ -62,33 +79,41 @@ app.innerHTML = `
 `;
 
 
-initializeUpload(async (file) => {
-    console.log('Selected image:', file);
+async function checkModelStatus() {
+    updateModelStatus('checking');
 
-    // Simulate network latency during frontend development.
-    await new Promise((resolve) => {
-        setTimeout(resolve, 1000);
-    });
+    try {
+        const health = await getHealth();
 
-    // Temporary test data from our previous API result.
-    const mockPrediction = {
-        breed: 'Beagle',
-        confidence: 0.9621317386627197,
-        predictions: [
-            {
-                breed: 'Beagle',
-                confidence: 0.9621317386627197,
-            },
-            {
-                breed: 'Basset Hound',
-                confidence: 0.024385787546634674,
-            },
-            {
-                breed: 'Shiba Inu',
-                confidence: 0.007599668111652136,
-            },
-        ],
-    };
+        updateModelStatus(
+            health.model_loaded
+                ? 'online'
+                : 'unavailable'
+        );
+    } catch {
+        updateModelStatus('offline');
+    }
+}
 
-    renderResults(mockPrediction);
-});
+
+async function handlePrediction(file) {
+    renderLoading();
+
+    try {
+        const prediction = await predictImage(file);
+
+        renderResults(prediction);
+    } catch (error) {
+        renderError(error.message);
+    } finally {
+        checkModelStatus();
+    }
+}
+
+
+initializeUpload(
+    handlePrediction,
+    resetResults
+);
+
+checkModelStatus();

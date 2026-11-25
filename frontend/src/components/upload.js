@@ -126,7 +126,8 @@ export function Upload() {
 }
 
 
-export function initializeUpload(onPredict) {
+export function initializeUpload(onPredict,
+    onReset = () => {}) {
     const fileInput = document.querySelector('#file-input');
     const browseButton = document.querySelector('#browse-button');
     const dropZone = document.querySelector('#drop-zone');
@@ -181,6 +182,7 @@ export function initializeUpload(onPredict) {
         revokePreview();
 
         selectedFile = file;
+        onReset();
         previewUrl = URL.createObjectURL(file);
 
         previewImage.src = previewUrl;
@@ -199,6 +201,7 @@ export function initializeUpload(onPredict) {
         if (isLoading) return;
 
         selectedFile = null;
+        onReset();
 
         revokePreview();
 
