@@ -5,7 +5,19 @@ import { Navbar } from './components/navbar.js';
 import { Hero } from './components/hero.js';
 import { Footer } from './components/footer.js';
 
+import {
+    Upload,
+    initializeUpload,
+} from './components/upload.js';
+
+import {
+    Results,
+    renderResults,
+} from './components/results.js';
+
+
 const app = document.querySelector('#app');
+
 
 app.innerHTML = `
     <div class="flex min-h-screen flex-col">
@@ -17,9 +29,12 @@ app.innerHTML = `
             ${Hero()}
 
             <section id="classifier"
-                     class="mx-auto max-w-6xl px-6">
+                     class="mx-auto grid max-w-6xl
+                            items-start gap-6 px-6
+                            md:grid-cols-2">
 
-                <!-- Image classifier component -->
+                ${Upload()}
+                ${Results()}
 
             </section>
 
@@ -32,7 +47,7 @@ app.innerHTML = `
                 </h2>
 
                 <p class="mt-4 leading-relaxed text-slate-600">
-                    Pets is a deep learning project that explores
+                    Pets is a deep learning project exploring
                     computer vision, transfer learning and
                     full-stack machine learning deployment.
                 </p>
@@ -45,3 +60,35 @@ app.innerHTML = `
 
     </div>
 `;
+
+
+initializeUpload(async (file) => {
+    console.log('Selected image:', file);
+
+    // Simulate network latency during frontend development.
+    await new Promise((resolve) => {
+        setTimeout(resolve, 1000);
+    });
+
+    // Temporary test data from our previous API result.
+    const mockPrediction = {
+        breed: 'Beagle',
+        confidence: 0.9621317386627197,
+        predictions: [
+            {
+                breed: 'Beagle',
+                confidence: 0.9621317386627197,
+            },
+            {
+                breed: 'Basset Hound',
+                confidence: 0.024385787546634674,
+            },
+            {
+                breed: 'Shiba Inu',
+                confidence: 0.007599668111652136,
+            },
+        ],
+    };
+
+    renderResults(mockPrediction);
+});
